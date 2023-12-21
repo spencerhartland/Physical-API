@@ -1,7 +1,7 @@
 import boto3
 import json
 from ..common import HTTP, Error
-from .models import UserID
+from .models.UserID import UserID
 
 # DynamoDB
 dynamoDBResourceName = 'dynamodb'

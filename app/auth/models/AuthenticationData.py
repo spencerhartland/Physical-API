@@ -16,30 +16,34 @@ class AuthenticationData:
     def __init__(self, authDataDict):
         
         # First, check the grant type
-        grantType = authDataDict[grantTypeKey]
-        if not grantType:
+        try:
+            grantType = authDataDict[grantTypeKey]
+        except:
             raise Error.AttributeNotFoundError(grantTypeKey)
             
         self.grantType = grantType
         
         if grantType == grantTypeAuthorizationCode:
             # Get the authorization code
-            authCode = authDataDict[authCodeKey]
-            if not authCode:
+            try:
+                authCode = authDataDict[authCodeKey]
+            except:
                 raise Error.AttributeNotFoundError(authCodeKey)
                 
             self.authCode = authCode
         elif grantType == grantTypeRefreshToken:
             # Get the refresh token
-            refreshToken = authDataDict[refreshTokenKey]
-            if not refreshToken:
+            try:
+                refreshToken = authDataDict[refreshTokenKey]
+            except:
                 raise Error.AttributeNotFoundError(refreshTokenKey)
                 
             self.refreshToken = refreshToken
                 
         # Get the identity token (JWT)
-        identityToken = authDataDict[identityTokenKey]
-        if not identityToken:
+        try:
+            identityToken = authDataDict[identityTokenKey]
+        except:
             raise Error.AttributeNotFoundError(identityTokenKey)
             
         self.identityToken = identityToken

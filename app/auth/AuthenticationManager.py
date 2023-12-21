@@ -4,7 +4,7 @@ import requests
 import base64
 import jwt
 from ..common import HTTP, Error
-from .models import AuthenticationData
+from .models.AuthenticationData import AuthenticationData
 
 # Environment variables
 clientID = os.environ['CLIENT_ID']
@@ -15,11 +15,6 @@ issuer = os.environ['ISSUER']
 publicKeyAlgo = os.environ['PUBLIC_KEY_ALGORITHM']
 
 asciiEncoding = "ascii"
-
-# Event request body keys
-authCodeKey = "authorizationCode"
-identityTokenKey = "identityToken"
-grantTypeKey = "grantType"
 
 # Grant type values
 grantTypeAuthorizationCode = "authorization_code"

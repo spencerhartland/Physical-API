@@ -9,7 +9,7 @@ userFunctionName = "user"
 def lambda_handler(event, context):
     # Get the HTTP method
     httpMethod = event.get(Event.httpMethodKey, "")
-        
+    
     if context.function_name == authFunctionName:
         if httpMethod == HTTP.methodPOST:
             authObject = getBody(event)

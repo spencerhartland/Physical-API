@@ -8,8 +8,9 @@ class UserID:
     def __init__(self, userIDDict):
     
         # Get user ID from dictionary
-        userID = userIDDict[userIDKey]
-        if not userID:
+        try:
+            userID = userIDDict[userIDKey]
+        except:
             raise Error.AttributeNotFoundError(userIDKey)
             
         # Save reference to the user ID
