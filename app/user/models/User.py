@@ -1,0 +1,10 @@
+# Dictionary keys
+userIDKey = "userID"
+usernameKey = "username"
+displayNameKey = "displayName"
+biographyKey = "biography"
+followersKey = "followers"
+followingKey = "following"
+featuredKey = "featured"
+collectionKey = "collection"
+postsKey = "posts"
