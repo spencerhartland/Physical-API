@@ -2,6 +2,17 @@ import boto3
 import json
 from ..common import HTTP, Error
 from .models.UserID import UserID
+from .models.User import User
+from .models.User import \
+    userIDKey, \
+    usernameKey, \
+    displayNameKey, \
+    biographyKey, \
+    followersKey, \
+    followingKey, \
+    featuredKey, \
+    collectionKey, \
+    postsKey
 
 # DynamoDB
 dynamoDBResourceName = 'dynamodb'
@@ -28,36 +39,39 @@ def getUser(userIDDict):
             }
         )
         
-        userProfileString = dbResponse[dynamoDBItemKey]
-    except:
-        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while requesting the user profile."}))
-    
-    try:
-        userProfile = json.loads(userProfileString)
+        userProfile = dbResponse[dynamoDBItemKey]
     except Exception as e:
-        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"User does not have a profile."}))
+        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":f"A problem ocurred while attempting to retrieve the user profile. {e}"}))
         
     # Return the user profile
     return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps(userProfile))
-"""
- # POST
-def createUser(userObject):
-    # The unique user identifier assigned to the user by Apple.
-    userID = userObject.get(, "")
-    # The unique username chosen by the user.
-    username = userObject.get(, "")
-    # The user's chosen display name.
-    displayName = userObject.get(, "")
-    # The user's biography.
-    biography = userObject.get(, "")
-    # The unique user identifiers of the user's followers.
-    followers = userObject.get(, "")
-    # The unique user identifiers of the user's followed accounts.
-    following = userObject.get(, "")
-    # The Music Item ID of the user's featured Music Item.
-    featured = userObject.get(, "")
-    # The unique identifier of the user's collection.
-    collection = userObject.get(, "")
-    # The unique identifiers of the user's authored posts.
-    posts = userObject.get(, "")
-"""
+    
+# POST
+def createUser(userDict):
+    
+    # Create the user object
+    # Doing so ensures that all required attributes are present.
+    try:
+        user = User(userDict)
+    except:
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message": "A required attribute is missing from the request body."}))
+    
+    # Create the user in the users table
+    try:
+        usersTable.put_item(
+            Item={
+                userIDKey: user.userID,
+                usernameKey: user.username,
+                displayNameKey: user.displayName,
+                biographyKey: user.biography,
+                followersKey: user.followers,
+                followingKey: user.following,
+                featuredKey: user.featured,
+                collectionKey: user.collection,
+                postsKey: user.posts
+            }
+        )
+    except:
+        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to add the user to the users table."}))
+        
+    return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, "")
