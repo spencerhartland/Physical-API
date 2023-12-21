@@ -9,9 +9,6 @@ class UserID:
     
         # Get user ID from dictionary
         try:
-            userID = userIDDict[userIDKey]
+            self.rawValue = userIDDict[userIDKey]
         except:
             raise Error.AttributeNotFoundError(userIDKey)
-            
-        # Save reference to the user ID
-        self.rawValue = userID

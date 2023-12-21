@@ -9,14 +9,14 @@ userFunctionName = "user"
 def lambda_handler(event, context):
     # Get the HTTP method
     httpMethod = event.get(Event.httpMethodKey, "")
-    
-    if context.function_name == authFunctionName:
-        if httpMethod == HTTP.methodPOST:
-            authObject = getBody(event)
-            return AuthenticationManager.authenticate(authObject)
-        else:
-            # HTTP method is not POST
-            return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+    #if context.function_name == authFunctionName:
+    if httpMethod == HTTP.methodPOST:
+        authObject = getBody(event)
+        return AuthenticationManager.authenticate(authObject)
+    else:
+        # HTTP method is not POST
+        return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+    """
     elif context.function_name == userFunctionName:
         if httpMethod == HTTP.methodGET:
             userIDObject = getBody(event)
@@ -24,6 +24,7 @@ def lambda_handler(event, context):
         else:
             # HTTP method is not GET
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+    """
 
 # Extracts http request body from event
 def getBody(event):
