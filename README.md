@@ -60,7 +60,7 @@ None.
 **400 Bad Request** The server was unable to process the request.  
 ***ErrorResponse*** *Content-Type: application/json*
 
-**500 Internal Error** The server encountered an internal error while processing the request.
+**500 Internal Error** The server encountered an internal error while processing the request.  
 ***ErrorResponse*** *Content-Type: application/json*
 
 ### Fetch user account
