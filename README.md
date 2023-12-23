@@ -54,7 +54,7 @@ None.
 **identityToken**: *String* A JSON Web Token (JWT) containing information that can be used to identify the user.
 
 #### Response Codes
-**200 OK** The user was authenticated. 
+**200 OK** The user was authenticated.  
 *No return value.*
 
 **400 Bad Request** The server was unable to process the request.  
