@@ -9,43 +9,41 @@ This repository contains the Python code powering the Physical API. `lambda_func
 
 ## API Reference
 
-### Endpoints
+### Fetch user-generated album art
 
-#### Fetch user-generated album art
-
-##### URL
+#### URL
 > **GET** `https://physical.spencerhartland.com/physical-ios/<image ID>.png`
 
-##### HTTP Body
+#### HTTP Body
 None.
 
-##### Response Codes
+#### Response Codes
 **200 OK** The request was completed.  
 ***Image*** *Content-Type: image/png*
 
-#### Upload user-generated album art
+### Upload user-generated album art
 
-##### URL
+#### URL
 > **POST** `https://physical.spencerhartland.com/physical-ios/<image ID>.png`
 
-##### HTTP Body
+#### HTTP Body
 **Image data** The raw PNG image data.  
 *Content-Type: image/png*
 
-##### Response Codes
+#### Response Codes
 **200 OK** The request was completed.  
 *No return value.*
 
-#### Authenticate user
+### Authenticate user
 
-##### URL
+#### URL
 > **POST** `https://physical.spencerhartland.com/auth`
 
 ##### HTTP Body
 **JSON Object** The authentication request body, which contains information required to authenticate the user.  
 *Content-Type: application/json*
 
-###### Properties
+##### Properties
 
 **grantType**: *String* The grant type used by the authentication request. Either `authorization_code` or `refresh_token`.
 
@@ -55,7 +53,7 @@ None.
 
 **identityToken**: *String* A JSON Web Token (JWT) containing information that can be used to identify the user.
 
-##### Response Codes
+#### Response Codes
 **200 OK** The user was authenticated. 
 *No return value.*
 
@@ -65,12 +63,12 @@ None.
 **500 Internal Error** The server encountered an internal error while processing the request.
 ***ErrorResponse*** *Content-Type: application/json*
 
-#### Fetch user account
+### Fetch user account
 
-##### URL
+#### URL
 > **GET** `https://physical.spencerhartland.com/user`
 
-#### Create user account
+### Create user account
 
-##### URL
+#### URL
 > **POST** `https://physical.spencerhartland.com/user`
