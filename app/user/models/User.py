@@ -1,12 +1,12 @@
 from ...common import Error
 
 # Dictionary keys
-userIDKey = "userID"
 usernameKey = "username"
+userIDKey = "userID"
 displayNameKey = "displayName"
 biographyKey = "biography"
 followersKey = "followers"
-followingKey = "following"/Users/spencerhartland/Desktop/Developer/Physical-backend/app/auth
+followingKey = "following"
 featuredKey = "featured"
 collectionKey = "collection"
 postsKey = "posts"
@@ -26,8 +26,8 @@ postsKey = "posts"
 class User:
     def __init__(self, userDict):
         try:
-            self.userID = userDict[userIDKey]
             self.username = userDict[usernameKey]
+            self.userID = userDict[userIDKey]
             self.displayName = userDict[displayNameKey]
             self.biography = userDict[biographyKey]
             self.followers = userDict[followersKey]
