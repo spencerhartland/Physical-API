@@ -5,60 +5,79 @@ from .user import UserManager
 
 authFunctionName = "auth"
 userFunctionName = "user"
-usernameFunctionName = "username"
+userIDFunctionName = "userID"
 
 # Query Params
-idTypeKey = "idType"
-identifierKey = "identifier"
 userIDKey = "userID"
+usernameKey = "username"
 
+# Main Lambda handler
 def lambda_handler(event, context):
     # Get the HTTP method
     httpMethod = event.get(Event.httpMethodKey, "")
     queryParams = event.get(Event.queryParamsKey)
     
     if context.function_name == authFunctionName:
-        if httpMethod == HTTP.methodPOST:
-            authDict = getBody(event)
-            return AuthenticationManager.authenticate(authDict)
-        else:
-            # HTTP method is not POST
-            return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+        authData = getBody(event)
+        return authHandler(httpMethod, authData)
     elif context.function_name == userFunctionName:
         if httpMethod == HTTP.methodGET:
-            idType = queryParams.get(idTypeKey)
-            identifier = queryParams.get(identifierKey)
-            if idType is None or idType == "":
-                return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request is missing the required `idType` parameter."}))
-            elif identifier is None or identifier == "":
-                return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request is missing the required `identifier` parameter."}))
-            else:
-                return UserManager.getUser(idType, identifier)
+            return fetchUser(queryParams)
         elif httpMethod == HTTP.methodPOST:
-            userDict = getBody(event)
-            return UserManager.createUser(userDict)
+            userData = getBody(event)
+            return createUser(userData)
         else:
-            # HTTP method is not implemented
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
-    elif context.function_name ==  usernameFunctionName:
+    elif context.function_name == userIDFunctionName:
         if httpMethod == HTTP.methodGET:
-            userID = queryParams.get(userIDKey)
-            if userID is None or userID == "":
-                return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request is missing the required `userID` parameter."}))
-            else:
-                try:
-                    username = UserManager.exchangeUserIDForUsername(userID)
-                    response = { "username": username }
-                    return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps(response))
-                except Exception as e:
-                    return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":f"There was a problem while attempting to exchange the user ID for username. {e}"}))
+            return fetchUserID(queryParams)
+        elif httpMethod == HTTP.methodPOST:
+            return
         else:
-            # HTTP method is not implemented
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+
+# Function-specific handlers
+
+# /auth ANY
+def authHandler(httpMethod, authData):
+    if httpMethod == HTTP.methodPOST:
+        return AuthenticationManager.authenticate(authData)
+    else:
+        # HTTP method is not implemented
+        return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+        
+# /user GET
+def fetchUser(queryParams):
+    userID = queryParams.get(userIDKey)
+    if userID is None or userID == "":
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request is missing the required `userID` parameter."}))
+    else:
+        return UserManager.getUser(userID)
+        
+# /user POST
+def createUser(userData):
+    return UserManager.createUser(userData)
+    
+# /username GET
+def fetchUserID(queryParams):
+    username = queryParams.get(usernameKey)
+    if username is None or username == "":
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request is missing the required `userID` parameter."}))
+    else:
+        try:
+            userID = UserManager.exchangeUsernameForUserID(username)
+            response = { "user ID": userID }
+            return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps(response))
+        except Exception as e:
+            return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":f"There was a problem while attempting to exchange the user ID for username. {e}"}))
+            
+# /username POST
+def registerUsername(queryParams):
+    pass
 
 # Extracts http request body from event
 def getBody(event):
-    bodyString = event.get(Event.httpBodyKey, "")
+    bodyString = event.get(Event.httpBodyKey)
     if not bodyString:
         return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message": "Request body is empty."}))
         

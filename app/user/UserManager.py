@@ -1,10 +1,6 @@
 import boto3
 import json
 from ..common import HTTP, Error
-from .models.UserRequest import \
-    idTypeUsername, \
-    idTypeUserID, \
-    UserRequest
 from .models.User import User
 from .models.User import \
     usernameKey, \
@@ -20,41 +16,30 @@ from .models.User import \
 # DynamoDB
 dynamoDBResourceName = 'dynamodb'
 dynamoDBUsersTableName = 'Physical-iOS_Users'
-dynamoDBUserIDsTableName = 'Physical-iOS_User-IDs'
+dynamoDBUsernamesTableName = 'Physical-iOS_Usernames'
 dynamoDBItemKey = 'Item'
 dynamoDBRegionName = 'us-west-1'
 dynamodb = boto3.resource(dynamoDBResourceName, region_name=dynamoDBRegionName)
 usersTable = dynamodb.Table(dynamoDBUsersTableName)
-userIDsTable = dynamodb.Table(dynamoDBUserIDsTableName)
+usernamesTable = dynamodb.Table(dynamoDBUsernamesTableName)
 
-def exchangeUserIDForUsername(userID):
-    dbResponse = userIDsTable.get_item(
+def exchangeUsernameForUserID(username):
+    dbResponse = usernamesTable.get_item(
         Key={
-            userIDKey: userID
+            usernameKey: username
         }
     )
     
     item = dbResponse[dynamoDBItemKey]
-    return item[usernameKey]
+    return item[userIDKey]
 
 # GET
-def getUser(idType, identifier):
-    try:
-        userRequest = UserRequest(idType, identifier)
-    except Exception as e:
-        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message": f"{e}"}))
-    
-    # Set correct search key
-    if userRequest.idType == idTypeUsername:
-        idType = usernameKey
-    elif userRequest.idType == idTypeUserID:
-        idType = userIDKey
-    
+def getUser(userID):
     # Request the user profile from DynamoDB
     try:
         dbResponse = usersTable.get_item(
             Key={
-                idType: userRequest.identifier
+                userIDKey: userID
             }
         )
         
@@ -79,8 +64,8 @@ def createUser(userDict):
     try:
         usersTable.put_item(
             Item={
-                usernameKey: user.username,
                 userIDKey: user.userID,
+                usernameKey: user.username,
                 displayNameKey: user.displayName,
                 biographyKey: user.biography,
                 followersKey: user.followers,
@@ -93,15 +78,15 @@ def createUser(userDict):
     except: 
         return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to add the user to the users table."}))
         
-    # Add user ID to User IDs table.
+    # Associates user ID and username by adding them to the user ID table in dynamo db.
     try:
-        userIDsTable.put_item(
+        usernamesTable.put_item(
             Item={
-                userIDKey: user.userID,
-                usernameKey: user.username
+                usernameKey: user.username,
+                userIDKey: user.userID
             }
         )
     except:
-        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to add the user ID to the User IDs table."}))
+        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to associate the specified user ID and username."}))
         
     return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, "")

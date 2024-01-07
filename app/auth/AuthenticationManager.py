@@ -55,9 +55,9 @@ def authenticate(authDataDict):
     if verified:
         validation = validate(authData.authCode, authData.grantType)
         if validation.status_code == HTTP.statusOK:
-            return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"User authenticated; identity token verified."}))
+            return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, validation.text)
         else:
-            return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":f"The authorization code could not be validated. {validation.text}"}))
+            return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The authorization code could not be validated."}))
     else:
         return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The validity of the identity token could not be verified."}))
 
