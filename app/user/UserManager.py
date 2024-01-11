@@ -11,7 +11,9 @@ from .models.User import \
     followingKey, \
     featuredKey, \
     collectionKey, \
-    postsKey
+    postsKey, \
+    coverPhotoURLKey, \
+    profilePhotoURLKey
 
 # DynamoDB
 dynamoDBResourceName = 'dynamodb'
@@ -72,7 +74,9 @@ def createUser(userDict):
                 followingKey: user.following,
                 featuredKey: user.featured,
                 collectionKey: user.collection,
-                postsKey: user.posts
+                postsKey: user.posts,
+                coverPhotoURLKey: user.coverPhotoURL,
+                profilePhotoURLKey: user.profilePhotoURL
             }
         )
     except: 

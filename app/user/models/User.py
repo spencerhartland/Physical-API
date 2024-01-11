@@ -10,6 +10,8 @@ followingKey = "following"
 featuredKey = "featured"
 collectionKey = "collection"
 postsKey = "posts"
+coverPhotoURLKey = "coverPhotoURL"
+profilePhotoURLKey = "profilePhotoURL"
 
 # An object representing a user.
 #
@@ -35,5 +37,7 @@ class User:
             self.featured = userDict[featuredKey]
             self.collection = userDict[collectionKey]
             self.posts = userDict[postsKey]
+            self.coverPhotoURL = userDict[coverPhotoURLKey]
+            self.profilePhotoURL = userDict[profilePhotoURLKey]
         except:
             raise Error.AttributeNotFoundError()
