@@ -11,6 +11,7 @@ statusNotImplemented = 501
 # HTTP methods
 methodGET = "GET"
 methodPOST = "POST"
+methodPUT = "PUT"
 
 # Creates a properly formatted response object for AWS to turn into an HTTP response
 def response(statusCode, headers, body):

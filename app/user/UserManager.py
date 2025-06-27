@@ -94,3 +94,29 @@ def createUser(userDict):
         return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to associate the specified user ID and username."}))
         
     return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, "")
+
+# PUT
+def updateUser(userDict):
+    # Create a temporary User object
+    try:
+        user = User(userDict)
+    except:
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message": "A required attribute is missing from the request body."}))
+        
+    # Attempt to update the user's profile
+    try:
+        usersTable.update_item(
+            Key={userIDKey: user.userID},
+            UpdateExpression=f"SET {usernameKey} = :{usernameKey}, {displayNameKey} = :{displayNameKey}, {biographyKey} = :{biographyKey}, {coverPhotoURLKey} = :{coverPhotoURLKey}, {profilePhotoURLKey} = :{profilePhotoURLKey}",
+            ExpressionAttributeValues={
+                f":{usernameKey}": user.username,
+                f":{displayNameKey}": user.displayName,
+                f":{biographyKey}": user.biography,
+                f":{coverPhotoURLKey}": user.coverPhotoURL,
+                f":{profilePhotoURLKey}": user.profilePhotoURL
+            }
+        )
+    except:
+        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"A problem ocurred while attempting to update the user object."}))
+    
+    return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, "")

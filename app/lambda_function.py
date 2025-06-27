@@ -26,6 +26,9 @@ def lambda_handler(event, context):
         elif httpMethod == HTTP.methodPOST:
             userData = getBody(event)
             return createUser(userData)
+        elif httpMethod == HTTP.methodPUT:
+            userData = getBody(event)
+            return updateUser(userData)
         else:
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
     elif context.function_name == userIDFunctionName:
@@ -58,7 +61,11 @@ def fetchUser(queryParams):
 def createUser(userData):
     return UserManager.createUser(userData)
     
-# /username GET
+# /user PUT
+def updateUser(userData):
+    return UserManager.updateUser(userData)
+    
+# /userID GET
 def fetchUserID(queryParams):
     username = queryParams.get(usernameKey)
     if username is None or username == "":
@@ -71,7 +78,7 @@ def fetchUserID(queryParams):
         except Exception as e:
             return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":f"There was a problem while attempting to exchange the user ID for username. {e}"}))
             
-# /username POST
+# /userID POST
 def registerUsername(queryParams):
     pass
 
