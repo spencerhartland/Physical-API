@@ -30,6 +30,11 @@ validationHeaders = {
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
+# Authenticates a user based on the provided authentication data.
+#
+# Parameters:
+#   - authDataDict: A dictionary with specific formatting that contains 
+#       information required to authenticate a user. See `AuthenticationData.py`.
 def authenticate(authDataDict):
     try:
         authData = AuthenticationData(authDataDict)
@@ -61,18 +66,32 @@ def authenticate(authDataDict):
     else:
         return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The validity of the identity token could not be verified."}))
 
-def verifyToken(identityToken, keys):
-    # Verify key ID in identity token header
+# Verifies that a JSON Web Token's (JWT) signature and claims are trustworthy 
+# using the token issuer's public key.
+#
+# Parameters:
+#   - identityToken: The JWT to be verified.
+#   - keys: A list of public keys which contains the key needed to verify 
+#       the token. This is provided by the issuer of the token (Apple).
+def verifyToken(identityToken, keys) -> bool:
+    # Get public key ID from JWT header
     keyID = jwt.get_unverified_header(identityToken)["kid"]
+    # Get key from list of Apple's public keys
     key = keys[keyID]
     try:
+        # `decode` handles verification of signature and claims. If not verfied, it will raise an error.
         payload = jwt.decode(identityToken, key=key, algorithms=[publicKeyAlgo], audience=clientID, issuer=issuer)
         return True
     except:
         return False
         
-    
-def validate(token, grantType):
+
+# Validates the provided token with Apple using the client secret.
+#
+# Parameters:
+#   - token: Either an authorization code (first time) or refresh token.
+#   - grantType: A string indicating the type of token being validated.
+def validate(token, grantType) -> requests.Response:
     clientSecret = __retrieveClientSecret()
     requestData = {
         "client_id": clientID,
