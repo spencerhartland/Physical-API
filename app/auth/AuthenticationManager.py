@@ -8,7 +8,7 @@ from .models.AuthenticationData import AuthenticationData
 
 # Environment variables
 clientID = os.environ['CLIENT_ID']
-clientSecret = os.environ['CLIENT_SECRET']
+clientSecretFile = os.environ['CLIENT_SECRET_FILE']
 validationURL = os.environ['VALIDATION_URL']
 publicKeyURL = os.environ['PUBLIC_KEY_URL']
 issuer = os.environ['ISSUER']
@@ -61,7 +61,6 @@ def authenticate(authDataDict):
     else:
         return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The validity of the identity token could not be verified."}))
 
-# Helper methods
 def verifyToken(identityToken, keys):
     # Verify key ID in identity token header
     keyID = jwt.get_unverified_header(identityToken)["kid"]
@@ -74,6 +73,7 @@ def verifyToken(identityToken, keys):
         
     
 def validate(token, grantType):
+    clientSecret = __retrieveClientSecret()
     requestData = {
         "client_id": clientID,
         "client_secret": clientSecret,
@@ -86,3 +86,6 @@ def validate(token, grantType):
     
     return requests.post(validationURL, data=requestData, headers=validationHeaders, timeout=10)
         
+def __retrieveClientSecret() -> str:
+    with open(clientSecretFile, "r") as file:
+        return file.read().strip()
