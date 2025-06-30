@@ -86,7 +86,9 @@ def verifyToken(identityToken, keys) -> bool:
         return False
         
 
-# Validates the provided token with Apple using the client secret.
+# Validates the provided token with Apple using the client secret. Refresh 
+# tokens may be validated a maximum of once per day, further requests will 
+# be throttled.
 #
 # Parameters:
 #   - token: Either an authorization code (first time) or refresh token.

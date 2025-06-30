@@ -3,9 +3,9 @@ from .common import HTTP, Event
 from .auth import AuthenticationManager
 from .user import UserManager
 
-authFunctionName = "auth"
-userFunctionName = "user"
-userIDFunctionName = "userID"
+authFunctionPath = "/auth"
+userFunctionPath = "/user"
+userIDFunctionPath = "/userID"
 
 # Query Params
 userIDKey = "userID"
@@ -13,14 +13,15 @@ usernameKey = "username"
 
 # Main Lambda handler
 def lambda_handler(event, context):
-    # Get the HTTP method
+    # Get info about the request from the event
     httpMethod = event.get(Event.httpMethodKey, "")
+    path = event.get(Event.pathKey, "")
     queryParams = event.get(Event.queryParamsKey)
     
-    if context.function_name == authFunctionName:
+    if path == authFunctionPath:
         authData = getBody(event)
         return authHandler(httpMethod, authData)
-    elif context.function_name == userFunctionName:
+    elif path == userFunctionPath:
         if httpMethod == HTTP.methodGET:
             return fetchUser(queryParams)
         elif httpMethod == HTTP.methodPOST:
@@ -31,13 +32,15 @@ def lambda_handler(event, context):
             return updateUser(userData)
         else:
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
-    elif context.function_name == userIDFunctionName:
+    elif path == userIDFunctionPath:
         if httpMethod == HTTP.methodGET:
             return fetchUserID(queryParams)
         elif httpMethod == HTTP.methodPOST:
             return
         else:
             return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+    else:
+        return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
 
 # Function-specific handlers
 
