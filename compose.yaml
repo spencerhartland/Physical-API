@@ -4,13 +4,17 @@ services:
     build: .
     environment:
       CLIENT_ID: "com.spencerhartland.Physical"
-      CLIENT_SECRET_FILE: /run/secrets/client_secret
+      SIWA_SECRET_FILE: /run/secrets/siwa_secret
+      PRIVATE_ACCESS_KEY_FILE: /run/secrets/private_access_key
+      PUBLIC_ACCESS_KEY_FILE: /run/secrets/public_access_key
       VALIDATION_URL: "https://appleid.apple.com/auth/token"
       PUBLIC_KEY_URL: "https://appleid.apple.com/auth/keys"
       ISSUER: "https://appleid.apple.com"
       PUBLIC_KEY_ALGORITHM: "RS256"
     secrets:
-      - client_secret
+      - siwa_secret
+      - private_access_key
+      - public_access_key
   dev:
     image: physical-api
     ports:
@@ -18,7 +22,9 @@ services:
     build: .
     environment:
       CLIENT_ID: "com.spencerhartland.Physical"
-      CLIENT_SECRET_FILE: /run/secrets/client_secret
+      SIWA_SECRET_FILE: /run/secrets/siwa_secret
+      PRIVATE_ACCESS_KEY_FILE: /run/secrets/private_access_key
+      PUBLIC_ACCESS_KEY_FILE: /run/secrets/public_access_key
       VALIDATION_URL: "https://appleid.apple.com/auth/token"
       PUBLIC_KEY_URL: "https://appleid.apple.com/auth/keys"
       ISSUER: "https://appleid.apple.com"
@@ -26,8 +32,14 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     secrets:
-      - client_secret
+      - siwa_secret
+      - private_access_key
+      - public_access_key
 
 secrets:
-  client_secret:
-    file: ./client_secret.txt
+  siwa_secret:
+    file: ./support/secrets/siwa_secret.txt
+  private_access_key:
+    file: ./support/secrets/private_access_key.txt
+  public_access_key:
+    file: ./support/secrets/public_access_key.txt

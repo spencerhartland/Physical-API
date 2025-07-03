@@ -5,10 +5,11 @@ import base64
 import jwt
 from ..common import HTTP, Error
 from .models.AuthenticationData import AuthenticationData
+from ..access import AccessManager
 
 # Environment variables
 clientID = os.environ['CLIENT_ID']
-clientSecretFile = os.environ['CLIENT_SECRET_FILE']
+siwaSecretFile = os.environ['SIWA_SECRET_FILE']
 validationURL = os.environ['VALIDATION_URL']
 publicKeyURL = os.environ['PUBLIC_KEY_URL']
 issuer = os.environ['ISSUER']
@@ -30,7 +31,8 @@ validationHeaders = {
     "Content-Type": "application/x-www-form-urlencoded"
 }
 
-# Authenticates a user based on the provided authentication data.
+# Authenticates a user based on the provided authentication data from 
+# Sign in with Apple.
 #
 # Parameters:
 #   - authDataDict: A dictionary with specific formatting that contains 
@@ -55,35 +57,57 @@ def authenticate(authDataDict):
     else:
         return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"Unable to retrieve public key."}))
         
-    # Verify identity token using public key
-    verified = verifyToken(authData.identityToken, publicKeys)
-    if verified:
+    try:
+        # Verify identity token using Apple's public key
+        identityToken = verifyToken(authData.identityToken, publicKeys)
+        # Validate authorization code with Apple ID server
         validation = validate(authData.authCode, authData.grantType)
         if validation.status_code == HTTP.statusOK:
-            return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, validation.text)
+            try:
+                # Get Sign in with Apple (SIWA) refresh token
+                tokenResponse = validation.json()
+            except:
+                return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"TokenResponse object could not be decoded."}))
+            
+            SIWARefreshToken = tokenResponse["refresh_token"]
+            # Get user ID from identity token
+            sub = identityToken["sub"]
+            
+            try:
+                # Generate API access token and refresh token for user
+                accessData = AccessManager.provideAccessFor(sub)
+            except Exception as error:
+                print(error)
+                return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"Unable to store token hash."}))
+            
+            authResponse = {
+                "SIWARefreshToken": SIWARefreshToken,
+                "accessToken": accessData.accessToken,
+                "refreshToken": accessData.refreshToken
+            }
+            return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps(authResponse))
         else:
             return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The authorization code could not be validated."}))
-    else:
-        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The validity of the identity token could not be verified."}))
+    except:
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The authenticity of the identity token could not be confirmed."}))
 
-# Verifies that a JSON Web Token's (JWT) signature and claims are trustworthy 
-# using the token issuer's public key.
+# Verifies the signature and claims of a JSON Web Token obtained by a user 
+# authenticating via Sign in with Apple.
 #
 # Parameters:
-#   - identityToken: The JWT to be verified.
+#   - identityToken: The Apple-provided JWT to be verified.
 #   - keys: A list of public keys which contains the key needed to verify 
 #       the token. This is provided by the issuer of the token (Apple).
-def verifyToken(identityToken, keys) -> bool:
+def verifyToken(identityToken, keys) -> dict:
     # Get public key ID from JWT header
     keyID = jwt.get_unverified_header(identityToken)["kid"]
     # Get key from list of Apple's public keys
     key = keys[keyID]
     try:
         # `decode` handles verification of signature and claims. If not verfied, it will raise an error.
-        payload = jwt.decode(identityToken, key=key, algorithms=[publicKeyAlgo], audience=clientID, issuer=issuer)
-        return True
-    except:
-        return False
+        return jwt.decode(identityToken, key=key, algorithms=[publicKeyAlgo], audience=clientID, issuer=issuer)
+    except Exception as error:
+        raise error
         
 
 # Validates the provided token with Apple using the client secret. Refresh 
@@ -108,5 +132,5 @@ def validate(token, grantType) -> requests.Response:
     return requests.post(validationURL, data=requestData, headers=validationHeaders, timeout=10)
         
 def __retrieveClientSecret() -> str:
-    with open(clientSecretFile, "r") as file:
+    with open(siwaSecretFile, "r") as file:
         return file.read().strip()
