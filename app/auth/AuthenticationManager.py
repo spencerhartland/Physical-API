@@ -8,13 +8,13 @@ from .models.AuthenticationData import AuthenticationData
 from ..access import AccessManager
 
 # Environment variables
-clientID = os.environ['CLIENT_ID']
-siwaSecretFile = os.environ['SIWA_SECRET_FILE']
-validationURL = os.environ['VALIDATION_URL']
-publicKeyURL = os.environ['PUBLIC_KEY_URL']
-issuer = os.environ['ISSUER']
-publicKeyAlgo = os.environ['PUBLIC_KEY_ALGORITHM']
+clientSecretFile = os.environ['CLIENT_SECRET_FILE']
 
+clientID = "com.spencerhartland.Physical"
+validationURL = "https://appleid.apple.com/auth/token"
+publicKeyURL = "https://appleid.apple.com/auth/keys"
+issuer = "https://appleid.apple.com"
+publicKeyAlgo = "RS256"
 asciiEncoding = "ascii"
 
 # Grant type values
@@ -132,5 +132,5 @@ def validate(token, grantType) -> requests.Response:
     return requests.post(validationURL, data=requestData, headers=validationHeaders, timeout=10)
         
 def __retrieveClientSecret() -> str:
-    with open(siwaSecretFile, "r") as file:
+    with open(clientSecretFile, "r") as file:
         return file.read().strip()

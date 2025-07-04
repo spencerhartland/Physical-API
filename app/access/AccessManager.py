@@ -1,14 +1,20 @@
 import os
 import jwt
 from cryptography.hazmat.primitives import serialization
+import jwt.algorithms
 from .models.AccessData import AccessData
 import time
 import secrets
 import hashlib
 import boto3
+import requests
+import json
 
-privateKeyFile = os.environ['PRIVATE_ACCESS_KEY_FILE']
-publicKeyFile = os.environ['PUBLIC_ACCESS_KEY_FILE']
+privateKeyFile = os.environ['PRIVATE_KEY_FILE']
+encryptionPasswordFile = os.environ['ENCRYPTION_PASSWORD_FILE']
+
+# Public key
+publicKeyURL = "https://physical.spencerhartland.com/auth/keys"
 
 # DynamoDB
 dynamoDBResourceName = 'dynamodb'
@@ -47,8 +53,8 @@ def exchange(token: str) -> AccessData:
         )
 
         sub = dbResponse["Item"]["sub"]
-    except Exception as error:
-        raise error
+    except:
+        raise Exception("No record of the provided refresh token. Obtain a new token by authenticating with your Apple Account.")
     
     # Provide access
     return provideAccessFor(sub)
@@ -58,16 +64,16 @@ def exchange(token: str) -> AccessData:
 # Parameters:
 #   - token: The client's API access token.
 def validate(token: str) -> bool:
-    publicKey = __retrievePublicKey()
+    publicKey = __retrievePublicKeyFor(token)
     try:
-        _ = jwt.decode(token, key=publicKey, algorithms=["RS256"], audience="com.spencerhartland.Physical", issuer="https://physical.spencerhartland.com")
+        _ = jwt.decode(token, key=publicKey, algorithms=["ES256"], audience="com.spencerhartland.Physical", issuer="https://physical.spencerhartland.com")
         return True
     except:
         return False
 
 
 def __generateAccessTokenFor(sub: str) -> str:
-    iat = time.time()
+    iat = int(time.time())
     privateKey = __retrievePrivateKey()
 
     payloadData = {
@@ -81,7 +87,7 @@ def __generateAccessTokenFor(sub: str) -> str:
     return jwt.encode(
     payload=payloadData,
     key=privateKey,
-    algorithm='RS256'
+    algorithm='ES256'
     )
 
 def __generateRefreshTokenFor(sub: str) -> str:
@@ -102,11 +108,20 @@ def __generateRefreshTokenFor(sub: str) -> str:
     
     return token
 
-def __retrievePrivateKey() -> serialization.SSHPrivateKeyTypes:
-    privateKeyString = open(privateKeyFile, 'r').read()
-    return serialization.load_ssh_private_key(privateKeyString.encode(), password=None)
+def __retrievePublicKeyFor(token: str) -> serialization.PublicFormat:
+    header = jwt.get_unverified_header(token)
+    keyID = header.get("kid")
 
-# TODO: Get rid of this - it should be pulled from server?
-def __retrievePublicKey() -> serialization.SSHPublicKeyTypes:
-    publicKeyString = open(publicKeyFile, 'r').read()
-    return serialization.load_ssh_private_key(publicKeyString.encode(), password=None)
+    result = requests.get(publicKeyURL)
+    jwks = result.json()
+    for jwk in jwks["keys"]:
+        if keyID == jwk["kid"]:
+            return jwt.algorithms.ECAlgorithm.from_jwk(json.dumps(jwk))
+
+def __retrievePrivateKey() -> serialization.PrivateFormat:
+    password = __retrieveEncryptionPassword()
+    privateKeyBytes = open(privateKeyFile, 'rb').read()
+    return serialization.load_pem_private_key(privateKeyBytes, password=password)
+
+def __retrieveEncryptionPassword() -> bytes:
+    return open(encryptionPasswordFile, 'rb').read().strip()

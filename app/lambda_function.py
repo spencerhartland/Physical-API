@@ -2,8 +2,11 @@ import json
 from .common import HTTP, Event
 from .auth import AuthenticationManager
 from .user import UserManager
+from .access import AccessManager
+import requests
 
 authFunctionPath = "/auth"
+tokenFunctionPath = "/auth/token"
 userFunctionPath = "/user"
 userIDFunctionPath = "/userID"
 
@@ -18,32 +21,41 @@ def lambda_handler(event, context):
     path = event.get(Event.pathKey, "")
     queryParams = event.get(Event.queryParamsKey)
     
+    # /auth ANY
     if path == authFunctionPath:
-        authData = getBody(event)
+        authData = __getBody(event)
         return authHandler(httpMethod, authData)
+    # /auth/token ANY
+    elif path == tokenFunctionPath:
+        tokenData = __getBody(event)
+        return tokenHandler(httpMethod, tokenData)
+    # /user
     elif path == userFunctionPath:
+        # GET
         if httpMethod == HTTP.methodGET:
             return fetchUser(queryParams)
+        # POST
         elif httpMethod == HTTP.methodPOST:
-            userData = getBody(event)
+            userData = __getBody(event)
             return createUser(userData)
+        # PUT
         elif httpMethod == HTTP.methodPUT:
-            userData = getBody(event)
+            userData = __getBody(event)
             return updateUser(userData)
-        else:
-            return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+    # /userID
     elif path == userIDFunctionPath:
+        # GET
         if httpMethod == HTTP.methodGET:
             return fetchUserID(queryParams)
+        # POST
         elif httpMethod == HTTP.methodPOST:
             return
-        else:
-            return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
-    else:
-        return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
 
-# Function-specific handlers
+    # Not implemented
+    return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+        
 
+# Function-specific handlers:
 # /auth ANY
 def authHandler(httpMethod, authData):
     if httpMethod == HTTP.methodPOST:
@@ -51,7 +63,22 @@ def authHandler(httpMethod, authData):
     else:
         # HTTP method is not implemented
         return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
-        
+    
+# /auth/token ANY
+def tokenHandler(httpMethod: str, tokenData: dict) -> requests.Response:
+    if httpMethod != HTTP.methodPOST:
+        # HTTP method is not implemented
+        return HTTP.response(HTTP.statusNotImplemented, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The requested method has not been implemented."}))
+
+    try:
+        token = tokenData["refreshToken"]
+        accessData = AccessManager.exchange(token)
+        return HTTP.response(HTTP.statusOK, HTTP.standardHTTPResponseHeaders, json.dumps(accessData.json()))
+    except KeyError:
+        return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message":"The request body is missing the required attribute: `refreshToken`."}))
+    except Exception as error:
+        return HTTP.response(HTTP.statusInternalError, HTTP.standardHTTPResponseHeaders, json.dumps({"message":str(error)}))
+
 # /user GET
 def fetchUser(queryParams):
     userID = queryParams.get(userIDKey)
@@ -86,7 +113,7 @@ def registerUsername(queryParams):
     pass
 
 # Extracts http request body from event
-def getBody(event):
+def __getBody(event):
     bodyString = event.get(Event.httpBodyKey)
     if not bodyString:
         return HTTP.response(HTTP.statusBadRequest, HTTP.standardHTTPResponseHeaders, json.dumps({"message": "Request body is empty."}))

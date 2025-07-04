@@ -3,43 +3,33 @@ services:
     image: physical-api
     build: .
     environment:
-      CLIENT_ID: "com.spencerhartland.Physical"
-      SIWA_SECRET_FILE: /run/secrets/siwa_secret
-      PRIVATE_ACCESS_KEY_FILE: /run/secrets/private_access_key
-      PUBLIC_ACCESS_KEY_FILE: /run/secrets/public_access_key
-      VALIDATION_URL: "https://appleid.apple.com/auth/token"
-      PUBLIC_KEY_URL: "https://appleid.apple.com/auth/keys"
-      ISSUER: "https://appleid.apple.com"
-      PUBLIC_KEY_ALGORITHM: "RS256"
+      CLIENT_SECRET_FILE: /run/secrets/client_secret
+      PRIVATE_KEY_FILE: /run/secrets/private_key
+      ENCRYPTION_PASSWORD_FILE: /run/secrets/encryption_password
     secrets:
-      - siwa_secret
-      - private_access_key
-      - public_access_key
+      - client_secret
+      - private_key
+      - encryption_password
   dev:
     image: physical-api
     ports:
       - "8000:8080"
     build: .
     environment:
-      CLIENT_ID: "com.spencerhartland.Physical"
-      SIWA_SECRET_FILE: /run/secrets/siwa_secret
-      PRIVATE_ACCESS_KEY_FILE: /run/secrets/private_access_key
-      PUBLIC_ACCESS_KEY_FILE: /run/secrets/public_access_key
-      VALIDATION_URL: "https://appleid.apple.com/auth/token"
-      PUBLIC_KEY_URL: "https://appleid.apple.com/auth/keys"
-      ISSUER: "https://appleid.apple.com"
-      PUBLIC_KEY_ALGORITHM: "RS256"
+      CLIENT_SECRET_FILE: /run/secrets/client_secret
+      PRIVATE_KEY_FILE: /run/secrets/private_key
+      ENCRYPTION_PASSWORD_FILE: /run/secrets/encryption_password
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     secrets:
-      - siwa_secret
-      - private_access_key
-      - public_access_key
+      - client_secret
+      - private_key
+      - encryption_password
 
 secrets:
-  siwa_secret:
-    file: ./support/secrets/siwa_secret.txt
-  private_access_key:
-    file: ./support/secrets/private_access_key.txt
-  public_access_key:
-    file: ./support/secrets/public_access_key.txt
+  client_secret:
+    file: ./support/secrets/client_secret.txt
+  private_key:
+    file: ./support/secrets/private_key.p8
+  encryption_password:
+    file: ./support/secrets/encryption_password.txt
