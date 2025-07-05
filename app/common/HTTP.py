@@ -5,6 +5,7 @@ standardHTTPResponseHeaders = {
 
 statusOK = 200
 statusBadRequest = 400
+statusUnauthorized = 401
 statusInternalError = 500
 statusNotImplemented = 501
 
@@ -12,6 +13,7 @@ statusNotImplemented = 501
 methodGET = "GET"
 methodPOST = "POST"
 methodPUT = "PUT"
+methodDELETE = "DELETE"
 
 # Creates a properly formatted response object for AWS to turn into an HTTP response
 def response(statusCode, headers, body):

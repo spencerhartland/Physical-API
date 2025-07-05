@@ -10,16 +10,38 @@ identityTokenKey = "identityToken"
 grantTypeAuthorizationCode = "authorization_code"
 grantTypeRefreshToken = "refresh_token"
 
-
-# An object containing an authorization code or refresh token along with a JSON web token.
-#
-# Attributes:
-#    - grantType: The grant type for the authentication request. Either "authorization_code" or "refresh_token."
-#    - authCode: If the grant type is authorization code, this attribute contains an authorization code obtained from Sign In With Apple.
-#    - refreshToken: If the grant type is refresh token, this attribute contains a refresh token obtained from the Sign In With Apple API.
-#    - identityToken: A JSON Web Token (JWT) containing information that can be used to identify the user authenticating.
 class AuthenticationData:
+    """
+    An object containing an authorization code or refresh token along with a JSON web token.
+    
+    Attributes:
+        grantType:
+            The grant type for the authentication request. Either 
+            "authorization_code" or "refresh_token."
+        authCode:
+            If the grant type is authorization code, this attribute contains 
+            an authorization code obtained from Sign In With Apple.
+        refreshToken:
+            If the grant type is refresh token, this attribute contains a 
+            refresh token obtained from the Sign In With Apple API.
+        identityToken:
+            A JSON Web Token (JWT) containing information that can be used to 
+            identify the user authenticating.
+    """
+
     def __init__(self, authDataDict):
+        """
+        Constructs an instance of `AuthenticationData` from the provided 
+        dictionary.
+
+        Parameters:
+            authDataDict:
+                A dictionary containing data that can be used to authenticate 
+                a user with Apple Account servers.
+
+        Returns:
+            An instance of `AuthenticationData`.
+        """
         
         # First, check the grant type
         try:

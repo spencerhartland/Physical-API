@@ -24,20 +24,32 @@ dynamoDBRegionName = 'us-west-1'
 dynamodb = boto3.resource(dynamoDBResourceName, region_name=dynamoDBRegionName)
 tokensTable = dynamodb.Table(dynamoDBTokensTableName)
 
-# Generates an access token and a refresh token for the user.
-#
-# Parameters:
-#   - sub: The identifier of the subject (user) to be given access.
 def provideAccessFor(sub: str) -> AccessData:
+    """
+    Generates a new access token and refresh token for the given user.
+
+    Parameters:
+        sub: The identifier of the subject (user) to be given access.
+
+    Returns:
+        An instance of `AccessData` containing the newly generated tokens.
+    """
+
     accessToken = __generateAccessTokenFor(sub)
     refreshToken = __generateRefreshTokenFor(sub)
     return AccessData(accessToken, refreshToken)
 
-# Exchanges a refresh token for a new access token and refresh token.
-#
-# Parameters:
-#   - token: The client's refresh token.
 def exchange(token: str) -> AccessData:
+    """
+    Exchanges a refresh token for a new access token and refresh token.
+    
+    Parameters:
+        token: The client's refresh token.
+
+    Returns:
+        An instance of `AccessData` containing the newly generated tokens.
+    """
+
     # Generate the provided token's hash value
     tokenHash = hashlib.sha256(token.encode()).hexdigest()
     # Validate hash
@@ -54,22 +66,40 @@ def exchange(token: str) -> AccessData:
 
         sub = dbResponse["Item"]["sub"]
     except:
-        raise Exception("No record of the provided refresh token. Obtain a new token by authenticating with your Apple Account.")
+        raise Exception("No record of the provided refresh token.")
     
     # Provide access
     return provideAccessFor(sub)
 
-# Checks the validity of an access token.
-#
-# Parameters:
-#   - token: The client's API access token.
-def validate(token: str) -> bool:
+def validate(token: str) -> dict:
+    """
+    Checks the validity of an access token.
+
+    Parameters:
+        token: The client's API access token.
+
+    Returns:
+        The payload of the access token as a dictionary, which contains claims 
+        typical of JWT identity tokens. For example:
+        ```
+        {
+            "iss": "https://physical.spencerhartland.com",
+            "sub": "user123456",
+            "aud": "com.spencerhartland.Physical",
+            "iat": 1751651698,
+            "exp": 1751655298
+        }
+        ```
+    """
+
     publicKey = __retrievePublicKeyFor(token)
-    try:
-        _ = jwt.decode(token, key=publicKey, algorithms=["ES256"], audience="com.spencerhartland.Physical", issuer="https://physical.spencerhartland.com")
-        return True
-    except:
-        return False
+    return jwt.decode(
+        token, 
+        key=publicKey, 
+        algorithms=["ES256"], 
+        audience="com.spencerhartland.Physical", 
+        issuer="https://physical.spencerhartland.com"
+    )
 
 
 def __generateAccessTokenFor(sub: str) -> str:
@@ -109,14 +139,17 @@ def __generateRefreshTokenFor(sub: str) -> str:
     return token
 
 def __retrievePublicKeyFor(token: str) -> serialization.PublicFormat:
-    header = jwt.get_unverified_header(token)
-    keyID = header.get("kid")
+    try:
+        header = jwt.get_unverified_header(token)
+        keyID = header.get("kid")
 
-    result = requests.get(publicKeyURL)
-    jwks = result.json()
-    for jwk in jwks["keys"]:
-        if keyID == jwk["kid"]:
-            return jwt.algorithms.ECAlgorithm.from_jwk(json.dumps(jwk))
+        result = requests.get(publicKeyURL)
+        jwks = result.json()
+        for jwk in jwks["keys"]:
+            if keyID == jwk["kid"]:
+                return jwt.algorithms.ECAlgorithm.from_jwk(json.dumps(jwk))
+    except:
+        raise Exception("An error occurred while attempting to fetch the public key.")
 
 def __retrievePrivateKey() -> serialization.PrivateFormat:
     password = __retrieveEncryptionPassword()
